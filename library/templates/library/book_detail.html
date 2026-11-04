@@ -4,5 +4,10 @@
 <h1>{{ book.title }}</h1>
 <p>by {{ book.author }} ({{ book.published_year }})</p>
 <p>Status: <strong>{{ book.get_status_display }}</strong></p>
+<form method="post" action="{% url 'library:book-borrow' book.pk %}" style="display:inline">
+  {% csrf_token %}
+  <button type="submit">{% if book.status == "available" %}Borrow{% else %}Return{% endif %}</button>
+</form>
+<a href="{% url 'library:book-delete' book.pk %}">Delete&hellip;</a>
 <p><a href="{% url 'library:book-list' %}">&larr; Back to list</a></p>
 {% endblock %}

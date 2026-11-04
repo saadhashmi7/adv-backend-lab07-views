@@ -1,6 +1,8 @@
+import time
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -180,8 +182,28 @@ class BorrowToggleView(LoginRequiredMixin, View):
         return redirect("library:book-detail", pk=book.pk)
 
 
+# ---------------------------------------------------------------- Task 9: custom mixins
+class TimedMixin:
+    """Custom mixin: measures how long the wrapped view took and logs it to the runserver console."""
+
+    def dispatch(self, request, *args, **kwargs):
+        start = time.perf_counter()
+        response = super().dispatch(request, *args, **kwargs)   # next class in the MRO
+        ms = (time.perf_counter() - start) * 1000
+        print(f"[{self.__class__.__name__}] {request.method} {request.path}"
+              f" -> {response.status_code} in {ms:.1f} ms", flush=True)
+        return response
+
+
+class StaffRequiredMixin(UserPassesTestMixin):
+    """Only staff users pass; logged-in non-staff get 403, anonymous users go to LOGIN_URL."""
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
 # ---------------------------------------------------------------- Task 8: generic CBVs
-class BookListView(ListView):
+class BookListView(TimedMixin, ListView):
     model = Book
     template_name = "library/cbv_book_list.html"
     context_object_name = "books"
@@ -220,7 +242,7 @@ class BookUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class BookDeleteView(LoginRequiredMixin, DeleteView):
+class BookDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):  # Task 9: staff only
     model = Book
     success_url = reverse_lazy("library:cbv-book-list")
 

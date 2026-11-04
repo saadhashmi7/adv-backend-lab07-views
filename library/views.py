@@ -1,5 +1,6 @@
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Book
 
@@ -47,3 +48,30 @@ def demo_status(request, code):
     if not 200 <= code <= 599:
         return HttpResponseBadRequest("Use a status code between 200 and 599")
     return HttpResponse(f"Status {code}", status=code)
+
+
+# ---------------------------------------------------------------- Task 3
+def home(request):
+    recent = Book.objects.order_by("-created_at")[:3]
+    return render(request, "library/home.html", {
+        "total": Book.objects.count(),
+        "recent": recent,
+    })
+
+
+def book_list(request):
+    q = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "")
+    books = Book.objects.all()
+    if q:
+        books = books.filter(Q(title__icontains=q) | Q(author__icontains=q))
+    if status in ("available", "borrowed"):
+        books = books.filter(status=status)
+    return render(request, "library/book_list.html", {
+        "books": books, "q": q, "status": status,
+    })
+
+
+def book_detail(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    return render(request, "library/book_detail.html", {"book": book})

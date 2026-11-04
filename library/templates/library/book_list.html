@@ -1,0 +1,28 @@
+{% extends "library/base.html" %}
+{% block title %}Books{% endblock %}
+{% block content %}
+<h1>Books</h1>
+<form method="get">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search title or author">
+  <select name="status">
+    <option value="">Any status</option>
+    <option value="available" {% if status == "available" %}selected{% endif %}>Available</option>
+    <option value="borrowed" {% if status == "borrowed" %}selected{% endif %}>Borrowed</option>
+  </select>
+  <button type="submit">Filter</button>
+</form>
+<p>{{ books|length }} book(s) found.</p>
+<table>
+  <tr><th>Title</th><th>Author</th><th>Year</th><th>Status</th></tr>
+  {% for book in books %}
+  <tr>
+    <td><a href="{% url 'library:book-detail' book.pk %}">{{ book.title }}</a></td>
+    <td>{{ book.author }}</td>
+    <td>{{ book.published_year }}</td>
+    <td>{{ book.get_status_display }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="4">No books match.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

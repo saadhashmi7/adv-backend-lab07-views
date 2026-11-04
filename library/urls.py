@@ -26,4 +26,7 @@ urlpatterns = [
     path("cbv/books/<int:pk>/", views.BookDetailView.as_view(), name="cbv-book-detail"),
     path("cbv/books/<int:pk>/edit/", views.BookUpdateView.as_view(), name="cbv-book-edit"),
     path("cbv/books/<int:pk>/delete/", views.BookDeleteView.as_view(), name="cbv-book-delete"),
+    # Task 10 - JSON endpoints
+    path("api/books/", views.BookApiView.as_view(), name="api-book-list"),
+    path("api/books/<int:pk>/", views.api_book_detail, name="api-book-detail"),
 ]

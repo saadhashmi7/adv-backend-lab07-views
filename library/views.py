@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -80,6 +81,7 @@ def book_detail(request, pk):
 
 
 # ---------------------------------------------------------------- Task 4
+@login_required
 def add_book(request):
     errors = {}
     values = {"title": "", "author": "", "published_year": ""}
@@ -109,6 +111,7 @@ def add_book(request):
 
 
 # ---------------------------------------------------------------- Task 5
+@login_required
 @require_POST
 def toggle_borrow(request, pk):
     book = get_object_or_404(Book, pk=pk)
@@ -118,6 +121,7 @@ def toggle_borrow(request, pk):
     return redirect("library:book-detail", pk=book.pk)
 
 
+@login_required
 @require_http_methods(["GET", "POST"])
 def delete_book(request, pk):
     book = get_object_or_404(Book, pk=pk)

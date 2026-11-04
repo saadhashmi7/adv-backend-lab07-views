@@ -1,0 +1,21 @@
+{% extends "library/base.html" %}
+{% block title %}Add book{% endblock %}
+{% block content %}
+<h1>Add a book</h1>
+<form method="post">
+  {% csrf_token %}
+  <p>
+    <label>Title <input type="text" name="title" value="{{ values.title }}"></label>
+    {% if errors.title %}<span class="errors">{{ errors.title }}</span>{% endif %}
+  </p>
+  <p>
+    <label>Author <input type="text" name="author" value="{{ values.author }}"></label>
+    {% if errors.author %}<span class="errors">{{ errors.author }}</span>{% endif %}
+  </p>
+  <p>
+    <label>Year <input type="text" name="published_year" value="{{ values.published_year }}"></label>
+    {% if errors.published_year %}<span class="errors">{{ errors.published_year }}</span>{% endif %}
+  </p>
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

@@ -12,5 +12,6 @@ urlpatterns = [
     path("demo/redirect/", views.demo_redirect, name="demo-redirect"),
     path("demo/status/<int:code>/", views.demo_status, name="demo-status"),
     path("books/", views.book_list, name="book-list"),
+    path("books/add/", views.add_book, name="book-add"),
     path("books/<int:pk>/", views.book_detail, name="book-detail"),
 ]

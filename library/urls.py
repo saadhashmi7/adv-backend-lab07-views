@@ -16,4 +16,8 @@ urlpatterns = [
     path("books/<int:pk>/", views.book_detail, name="book-detail"),
     path("books/<int:pk>/borrow/", views.toggle_borrow, name="book-borrow"),
     path("books/<int:pk>/delete/", views.delete_book, name="book-delete"),
+    # Task 7 - CBVs from View
+    path("cbv/manual/books/", views.BookListBaseView.as_view(), name="cbv-manual-list"),
+    path("cbv/manual/books/add/", views.BookCreateManualView.as_view(), name="cbv-manual-add"),
+    path("cbv/books/<int:pk>/borrow/", views.BorrowToggleView.as_view(), name="cbv-book-borrow"),
 ]

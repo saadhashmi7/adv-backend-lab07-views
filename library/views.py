@@ -1,11 +1,44 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views import View
 from django.views.decorators.http import require_http_methods, require_POST
 
 from .models import Book
+
+
+# ---------------------------------------------------------------- Task 7 helpers
+def filter_books(params, queryset=None):
+    """Apply ?q= and ?status= filters. Returns (books, q, status)."""
+    q = params.get("q", "").strip()
+    status = params.get("status", "")
+    books = Book.objects.all() if queryset is None else queryset
+    if q:
+        books = books.filter(Q(title__icontains=q) | Q(author__icontains=q))
+    if status in ("available", "borrowed"):
+        books = books.filter(status=status)
+    return books, q, status
+
+
+def validate_book_form(data):
+    """Return (values, errors, year) for submitted book form data."""
+    values = {key: data.get(key, "").strip() for key in ("title", "author", "published_year")}
+    errors = {}
+    if not values["title"]:
+        errors["title"] = "Title is required."
+    if not values["author"]:
+        errors["author"] = "Author is required."
+    year = None
+    try:
+        year = int(values["published_year"])
+        if not 1000 <= year <= 2100:
+            errors["published_year"] = "Enter a year between 1000 and 2100."
+    except ValueError:
+        errors["published_year"] = "Year must be a whole number."
+    return values, errors, year
 
 
 # ---------------------------------------------------------------- Task 1
@@ -63,16 +96,8 @@ def home(request):
 
 
 def book_list(request):
-    q = request.GET.get("q", "").strip()
-    status = request.GET.get("status", "")
-    books = Book.objects.all()
-    if q:
-        books = books.filter(Q(title__icontains=q) | Q(author__icontains=q))
-    if status in ("available", "borrowed"):
-        books = books.filter(status=status)
-    return render(request, "library/book_list.html", {
-        "books": books, "q": q, "status": status,
-    })
+    books, q, status = filter_books(request.GET)
+    return render(request, "library/book_list.html", {"books": books, "q": q, "status": status})
 
 
 def book_detail(request, pk):
@@ -83,24 +108,9 @@ def book_detail(request, pk):
 # ---------------------------------------------------------------- Task 4
 @login_required
 def add_book(request):
-    errors = {}
-    values = {"title": "", "author": "", "published_year": ""}
+    values, errors = {"title": "", "author": "", "published_year": ""}, {}
     if request.method == "POST":
-        values = {
-            "title": request.POST.get("title", "").strip(),
-            "author": request.POST.get("author", "").strip(),
-            "published_year": request.POST.get("published_year", "").strip(),
-        }
-        if not values["title"]:
-            errors["title"] = "Title is required."
-        if not values["author"]:
-            errors["author"] = "Author is required."
-        try:
-            year = int(values["published_year"])
-            if not 1000 <= year <= 2100:
-                errors["published_year"] = "Enter a year between 1000 and 2100."
-        except ValueError:
-            errors["published_year"] = "Year must be a whole number."
+        values, errors, year = validate_book_form(request.POST)
         if not errors:
             book = Book.objects.create(
                 title=values["title"], author=values["author"], published_year=year,
@@ -131,3 +141,38 @@ def delete_book(request, pk):
         messages.success(request, f'"{title}" was deleted.')
         return redirect("library:book-list")
     return render(request, "library/book_confirm_delete.html", {"book": book})
+
+
+# ---------------------------------------------------------------- Task 7: CBVs from View
+class BookListBaseView(View):
+    template_name = "library/book_list.html"
+
+    def get(self, request):
+        books, q, status = filter_books(request.GET)
+        return render(request, self.template_name, {"books": books, "q": q, "status": status})
+
+
+class BookCreateManualView(LoginRequiredMixin, View):
+    template_name = "library/add_book.html"
+
+    def get(self, request):
+        return render(request, self.template_name, {"values": {}, "errors": {}})
+
+    def post(self, request):
+        values, errors, year = validate_book_form(request.POST)
+        if errors:
+            return render(request, self.template_name, {"values": values, "errors": errors})
+        book = Book.objects.create(
+            title=values["title"], author=values["author"], published_year=year,
+        )
+        messages.success(request, f'"{book.title}" was added.')
+        return redirect("library:book-detail", pk=book.pk)
+
+
+class BorrowToggleView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        book = get_object_or_404(Book, pk=pk)
+        book.status = "borrowed" if book.status == "available" else "available"
+        book.save(update_fields=["status"])
+        messages.info(request, f'"{book.title}" is now {book.get_status_display().lower()}.')
+        return redirect("library:book-detail", pk=book.pk)

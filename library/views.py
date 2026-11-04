@@ -4,7 +4,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
 from django.views import View
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django.views.decorators.http import require_http_methods, require_POST
 
 from .models import Book
@@ -176,3 +178,52 @@ class BorrowToggleView(LoginRequiredMixin, View):
         book.save(update_fields=["status"])
         messages.info(request, f'"{book.title}" is now {book.get_status_display().lower()}.')
         return redirect("library:book-detail", pk=book.pk)
+
+
+# ---------------------------------------------------------------- Task 8: generic CBVs
+class BookListView(ListView):
+    model = Book
+    template_name = "library/cbv_book_list.html"
+    context_object_name = "books"
+    paginate_by = 3
+
+    def get_queryset(self):
+        books, _q, _status = filter_books(self.request.GET, super().get_queryset())
+        return books
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["q"] = self.request.GET.get("q", "").strip()
+        context["status"] = self.request.GET.get("status", "")
+        return context
+
+
+class BookDetailView(DetailView):
+    model = Book
+
+
+class BookCreateView(LoginRequiredMixin, CreateView):
+    model = Book
+    fields = ["title", "author", "published_year"]
+
+    def form_valid(self, form):
+        messages.success(self.request, f'"{form.instance.title}" was added.')
+        return super().form_valid(form)
+
+
+class BookUpdateView(LoginRequiredMixin, UpdateView):
+    model = Book
+    fields = ["title", "author", "published_year", "status"]
+
+    def form_valid(self, form):
+        messages.success(self.request, f'"{form.instance.title}" was updated.')
+        return super().form_valid(form)
+
+
+class BookDeleteView(LoginRequiredMixin, DeleteView):
+    model = Book
+    success_url = reverse_lazy("library:cbv-book-list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f'"{self.object.title}" was deleted.')
+        return super().form_valid(form)

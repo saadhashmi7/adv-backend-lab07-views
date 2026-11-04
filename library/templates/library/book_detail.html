@@ -9,5 +9,6 @@
   <button type="submit">{% if book.status == "available" %}Borrow{% else %}Return{% endif %}</button>
 </form>
 <a href="{% url 'library:book-delete' book.pk %}">Delete&hellip;</a>
+<a href="{% url 'library:cbv-book-edit' book.pk %}">Edit</a>
 <p><a href="{% url 'library:book-list' %}">&larr; Back to list</a></p>
 {% endblock %}

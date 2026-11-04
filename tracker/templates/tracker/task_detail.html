@@ -1,0 +1,22 @@
+{% extends "library/base.html" %}
+{% block title %}{{ task.title }}{% endblock %}
+{% block content %}
+<h1>{{ task.title }}</h1>
+<p>{{ task.description|default:"(no description)"|linebreaksbr }}</p>
+<table>
+  <tr><th>Owner</th><td>{{ task.owner.username }}</td></tr>
+  <tr><th>Priority</th><td>{{ task.get_priority_display }}</td></tr>
+  <tr><th>Status</th><td><strong>{{ task.get_status_display }}</strong></td></tr>
+  <tr><th>Due date</th><td{% if task.is_overdue %} class="overdue"{% endif %}>{{ task.due_date|default:"-" }}{% if task.is_overdue %} (overdue){% endif %}</td></tr>
+  <tr><th>Created</th><td>{{ task.created_at|date:"Y-m-d H:i" }}</td></tr>
+</table>
+<p>
+  <form method="post" action="{% url 'tracker:task-toggle' task.pk %}" style="display:inline">
+    {% csrf_token %}
+    <button type="submit">{% if task.status == "done" %}Reopen{% else %}Mark done{% endif %}</button>
+  </form>
+  <a href="{% url 'tracker:task-edit' task.pk %}">Edit</a>
+  <a href="{% url 'tracker:task-delete' task.pk %}">Delete&hellip;</a>
+</p>
+<p><a href="{% url 'tracker:task-list' %}">&larr; Back to my tasks</a></p>
+{% endblock %}

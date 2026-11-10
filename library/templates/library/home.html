@@ -1,0 +1,12 @@
+{% extends "library/base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1>Campus Library</h1>
+<p>The catalogue holds <strong>{{ total }}</strong> books.</p>
+<h2>Recently added</h2>
+<ul>
+  {% for book in recent %}
+    <li><a href="{% url 'library:book-detail' book.pk %}">{{ book.title }}</a> by {{ book.author }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

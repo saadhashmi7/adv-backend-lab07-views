@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods, require_POST
 
 from .models import Book
 
@@ -105,3 +106,24 @@ def add_book(request):
             messages.success(request, f'"{book.title}" was added.')
             return redirect("library:book-detail", pk=book.pk)
     return render(request, "library/add_book.html", {"values": values, "errors": errors})
+
+
+# ---------------------------------------------------------------- Task 5
+@require_POST
+def toggle_borrow(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    book.status = "borrowed" if book.status == "available" else "available"
+    book.save(update_fields=["status"])
+    messages.info(request, f'"{book.title}" is now {book.get_status_display().lower()}.')
+    return redirect("library:book-detail", pk=book.pk)
+
+
+@require_http_methods(["GET", "POST"])
+def delete_book(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    if request.method == "POST":
+        title = book.title
+        book.delete()
+        messages.success(request, f'"{title}" was deleted.')
+        return redirect("library:book-list")
+    return render(request, "library/book_confirm_delete.html", {"book": book})

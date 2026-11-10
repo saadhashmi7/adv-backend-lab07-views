@@ -1,0 +1,10 @@
+{% extends "library/base.html" %}
+{% block title %}Book form{% endblock %}
+{% block content %}
+<h1>{% if object %}Edit "{{ object.title }}"{% else %}New book{% endif %}</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

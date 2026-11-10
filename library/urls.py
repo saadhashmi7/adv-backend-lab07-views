@@ -20,4 +20,10 @@ urlpatterns = [
     path("cbv/manual/books/", views.BookListBaseView.as_view(), name="cbv-manual-list"),
     path("cbv/manual/books/add/", views.BookCreateManualView.as_view(), name="cbv-manual-add"),
     path("cbv/books/<int:pk>/borrow/", views.BorrowToggleView.as_view(), name="cbv-book-borrow"),
+    # Task 8 - generic CBVs
+    path("cbv/books/", views.BookListView.as_view(), name="cbv-book-list"),
+    path("cbv/books/add/", views.BookCreateView.as_view(), name="cbv-book-add"),
+    path("cbv/books/<int:pk>/", views.BookDetailView.as_view(), name="cbv-book-detail"),
+    path("cbv/books/<int:pk>/edit/", views.BookUpdateView.as_view(), name="cbv-book-edit"),
+    path("cbv/books/<int:pk>/delete/", views.BookDeleteView.as_view(), name="cbv-book-delete"),
 ]

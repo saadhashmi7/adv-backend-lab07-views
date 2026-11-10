@@ -1,0 +1,36 @@
+{% extends "library/base.html" %}
+{% block title %}Books (CBV){% endblock %}
+{% block content %}
+<h1>Books (class-based)</h1>
+<form method="get">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search title or author">
+  <select name="status">
+    <option value="">Any status</option>
+    <option value="available" {% if status == "available" %}selected{% endif %}>Available</option>
+    <option value="borrowed" {% if status == "borrowed" %}selected{% endif %}>Borrowed</option>
+  </select>
+  <button type="submit">Filter</button>
+</form>
+<p><a href="{% url 'library:cbv-book-add' %}">Add book</a> &middot; {{ paginator.count }} book(s) found.</p>
+<table>
+  <tr><th>Title</th><th>Author</th><th>Year</th><th>Status</th><th></th></tr>
+  {% for book in books %}
+  <tr>
+    <td><a href="{% url 'library:cbv-book-detail' book.pk %}">{{ book.title }}</a></td>
+    <td>{{ book.author }}</td>
+    <td>{{ book.published_year }}</td>
+    <td>{{ book.get_status_display }}</td>
+    <td><a href="{% url 'library:cbv-book-edit' book.pk %}">Edit</a></td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5">No books match.</td></tr>
+  {% endfor %}
+</table>
+{% if is_paginated %}
+<p>
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&status={{ status|urlencode }}">&larr; Previous</a>{% endif %}
+  Page {{ page_obj.number }} of {{ paginator.num_pages }}
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&status={{ status|urlencode }}">Next &rarr;</a>{% endif %}
+</p>
+{% endif %}
+{% endblock %}

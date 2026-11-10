@@ -6,4 +6,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
     path("library/", include("library.urls")),
+    path("buggy/", include("library.urls_buggy")),  # Task 11 debugging challenge
 ]

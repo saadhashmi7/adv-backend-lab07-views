@@ -7,4 +7,5 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("library/", include("library.urls")),
     path("buggy/", include("library.urls_buggy")),  # Task 11 debugging challenge
+    path("tracker/", include("tracker.urls")),       # Task 12 take-home mini-project
 ]

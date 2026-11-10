@@ -11,6 +11,7 @@
     .errors { color: #c62828; }
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ccc; padding: .4rem .6rem; text-align: left; }
+    .overdue { color: #c62828; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -19,6 +20,7 @@
     <a href="{% url 'library:book-list' %}">Books</a>
     <a href="{% url 'library:book-add' %}">Add book</a>
     <a href="{% url 'library:cbv-book-list' %}">Books (CBV)</a>
+    <a href="{% url 'tracker:task-list' %}">Tracker</a>
     {% if user.is_authenticated %}
       <form method="post" action="{% url 'logout' %}" style="display:inline">
         {% csrf_token %}

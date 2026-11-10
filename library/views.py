@@ -1,3 +1,4 @@
+import json
 import time
 
 from django.contrib import messages
@@ -9,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .models import Book
 
@@ -249,3 +250,58 @@ class BookDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):  # Tas
     def form_valid(self, form):
         messages.success(self.request, f'"{self.object.title}" was deleted.')
         return super().form_valid(form)
+
+
+# ---------------------------------------------------------------- Task 10: JSON endpoints
+def book_to_dict(book):
+    return {
+        "id": book.pk,
+        "title": book.title,
+        "author": book.author,
+        "published_year": book.published_year,
+        "status": book.status,
+        "url": book.get_absolute_url(),
+    }
+
+
+class BookApiView(View):
+    """GET /library/api/books/  -> list (supports ?q= and ?status=)
+    POST /library/api/books/ -> create from a JSON body (login + CSRF token required)."""
+
+    def get(self, request):
+        books, q, status = filter_books(request.GET)
+        return JsonResponse({"count": books.count(), "results": [book_to_dict(b) for b in books]})
+
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Authentication required."}, status=401)
+        try:
+            payload = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON."}, status=400)
+        if not isinstance(payload, dict):
+            return JsonResponse({"error": "Expected a JSON object."}, status=400)
+        values, errors, year = validate_book_form({k: str(v) for k, v in payload.items()})
+        if errors:
+            return JsonResponse({"errors": errors}, status=400)
+        book = Book.objects.create(
+            title=values["title"], author=values["author"], published_year=year,
+        )
+        response = JsonResponse(book_to_dict(book), status=201)
+        response["Location"] = f"/library/api/books/{book.pk}/"
+        return response
+
+    def http_method_not_allowed(self, request, *args, **kwargs):
+        # hook override: answer an API client in JSON instead of an empty body
+        response = JsonResponse({"error": f"Method {request.method} not allowed."}, status=405)
+        response["Allow"] = ", ".join(self._allowed_methods())
+        return response
+
+
+@require_GET
+def api_book_detail(request, pk):
+    try:
+        book = Book.objects.get(pk=pk)
+    except Book.DoesNotExist:
+        return JsonResponse({"error": f"Book {pk} not found."}, status=404)
+    return JsonResponse(book_to_dict(book))

@@ -3,6 +3,7 @@
 {% block content %}
 <h1>Add a book (Task 11, bug 4)</h1>
 <form method="post">
+  {% csrf_token %}{# FIX 4 #}
   <p><label>Title <input type="text" name="title"></label></p>
   <button type="submit">Save</button>
 </form>

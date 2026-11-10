@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -75,3 +76,32 @@ def book_list(request):
 def book_detail(request, pk):
     book = get_object_or_404(Book, pk=pk)
     return render(request, "library/book_detail.html", {"book": book})
+
+
+# ---------------------------------------------------------------- Task 4
+def add_book(request):
+    errors = {}
+    values = {"title": "", "author": "", "published_year": ""}
+    if request.method == "POST":
+        values = {
+            "title": request.POST.get("title", "").strip(),
+            "author": request.POST.get("author", "").strip(),
+            "published_year": request.POST.get("published_year", "").strip(),
+        }
+        if not values["title"]:
+            errors["title"] = "Title is required."
+        if not values["author"]:
+            errors["author"] = "Author is required."
+        try:
+            year = int(values["published_year"])
+            if not 1000 <= year <= 2100:
+                errors["published_year"] = "Enter a year between 1000 and 2100."
+        except ValueError:
+            errors["published_year"] = "Year must be a whole number."
+        if not errors:
+            book = Book.objects.create(
+                title=values["title"], author=values["author"], published_year=year,
+            )
+            messages.success(request, f'"{book.title}" was added.')
+            return redirect("library:book-detail", pk=book.pk)
+    return render(request, "library/add_book.html", {"values": values, "errors": errors})
